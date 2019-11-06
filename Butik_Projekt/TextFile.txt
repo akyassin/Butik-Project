@@ -1,0 +1,19 @@
+﻿Ananas.jpg,Ananas,Så god..och så exotisk.,35,75
+
+            Button loadBasket = new Button()
+            {
+                Content = "Load Basket",
+                Width = 120,
+                Height = 30,
+                Margin = new Thickness(5),
+                FontSize = 15,
+            };
+            varukorgWrapPanel.Children.Add(loadBasket);
+            loadBasket.Click += LoadBasket_Click;
+
+        }
+
+        private void LoadBasket_Click(object sender, RoutedEventArgs e)
+        {
+            readSavedItems();
+        }

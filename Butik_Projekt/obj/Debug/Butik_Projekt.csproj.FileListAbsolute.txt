@@ -1,0 +1,16 @@
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt.csprojAssemblyReference.cache
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\MainWindow.g.cs
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\App.g.cs
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt_MarkupCompile.cache
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt_MarkupCompile.lref
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\bin\Debug\Butik_Projekt.exe.config
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\bin\Debug\Butik_Projekt.exe
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\bin\Debug\Butik_Projekt.pdb
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\MainWindow.baml
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt.g.resources
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt.Properties.Resources.resources
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt.csproj.GenerateResource.cache
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt.exe
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\obj\Debug\Butik_Projekt.pdb
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\bin\Debug\Produkter.csv
+C:\Users\akyas\source\repos\Butik_Projekt\Butik_Projekt\bin\Debug\Discount.csv
