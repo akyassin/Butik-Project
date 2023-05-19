@@ -36,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -69,6 +70,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\AppSetting.cs" />
+    <Compile Include="Models\BasketProduct.cs" />
+    <Compile Include="Models\BoughtProduct.cs" />
+    <Compile Include="Models\Coupon.cs" />
+    <Compile Include="Models\Product.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -86,10 +92,10 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="Discount.csv">
+    <None Include="Data\Discount.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Produkter.csv">
+    <None Include="Data\Produkter.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">
@@ -101,28 +107,45 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Bilder\Apelsin.jpg" />
-    <Resource Include="Bilder\Banan.jpg" />
-    <Resource Include="Bilder\Blåbär.jpg" />
-    <Resource Include="Bilder\Hallon.jpg" />
-    <Resource Include="Bilder\Jordgubbar.jpg" />
-    <Resource Include="Bilder\Persika.jpg" />
-    <Resource Include="Bilder\Päron.jpg" />
-    <Resource Include="Bilder\Vattenmelon.jpg" />
-    <Resource Include="Bilder\Vinddruva.jpg" />
-    <Resource Include="Bilder\Äpple.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Bilder\Ananas.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="TextFile.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Bilder\Logo.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Bilder\Background.jpg" />
+    <Resource Include="Images\Ananas.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Apelsin.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Background.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Banan.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Blåbär.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Hallon.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Jordgubbar.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Persika.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Päron.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Vattenmelon.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Vinddruva.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Äpple.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

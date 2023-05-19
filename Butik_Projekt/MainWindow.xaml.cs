@@ -6,85 +6,94 @@ using System.Windows.Media;
 using System.Windows.Controls;
 using System.Collections.Generic;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using Butik_Projekt.Models;
 
 namespace Butik_Projekt
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    /// 
-    public class BasketItem
-    {
-        public string Name;
-        public int TotalAmount;
-        public int TotalPrice;
-        public bool Checked;
-    }
-    public class BuyedProduct
-    {
-        public string Name;
-        public int Amount;
-        public int Price;
-        public int CurrentStock;
-    }
-    public class DiscountCopounes
-    {
-        public string Code;
-        public double Percentage;
-    }
     public partial class MainWindow : Window
     {
-        public Grid grid = new Grid();
+        private Grid grid = new Grid();
+        private WrapPanel productWrapPanel;
+        private WrapPanel varukorgWrapPanel;
+        private StackPanel finishPanel = new StackPanel();
 
-        public WrapPanel productWrapPanel;
-        public StackPanel varukorgWrapPanel;
+        //private Label totalPrice;
+        private Label currentStock;
+        private TextBox discountText;
 
-        public Button finish;
-        public Label totalPrice;
-        public Label currentStock;
-        public TextBox discountText;
-
-        public double total;
-        public string savedBasket = @"C:\Windows\Temp\SavedBasket.csv";
-
-        public string[] products;
-        public string[] discounted;
-        public string[] readItemsFromBasket;
-
-        public List<string> savedProducts = new List<string>();
-        public List<BasketItem> basketItems = new List<BasketItem>();
-        public List<BuyedProduct> buyedProducts = new List<BuyedProduct>();
-        public List<DiscountCopounes> discountCopounes = new List<DiscountCopounes>();
+        private List<Coupon> _coupons;
+        private List<Product> _products;
+        private List<BasketProduct> _basketProducts;
 
         public MainWindow()
         {
             InitializeComponent();
+            InitializeGlobalVariables();
+
             Start();
         }
+
+        private void InitializeGlobalVariables()
+        {
+            _products = ReadProducts();
+            _coupons = ReadDiscountCopounes();
+            _basketProducts = ReadSavedProducts();
+        }
+
         public void Start()
         {
-            Title = "AM Frukt Affär";
-            Height = 600;
-            Width = 1310;
+            ConfigureWindowSettings();
+            ConfigureScrolledMainGrid();
+            ConfigureProductsWrapPanel();
+            ConfigureVarukorgWrapPanel();
+
+            ShowBasketItems();
+
+            ShowProducts();
+        }
+
+        private void ConfigureScrolledMainGrid()
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition());
+            grid.ColumnDefinitions.Add(new ColumnDefinition
+            {
+                Width = GridLength.Auto
+            });
 
             ScrollViewer scroll = (ScrollViewer)Content;
             scroll.Content = grid;
-            grid.ColumnDefinitions.Add(new ColumnDefinition());
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        }
 
-            ReadDiscountCopounes();
-
-            ImageBrush myBrush = new ImageBrush();
-            Image image = new Image();
-            image.Source = new BitmapImage(new Uri("Bilder/Background.jpg"));
-            myBrush.ImageSource = image.Source;
-
-            StackPanel productStackPanel = new StackPanel
+        private void ConfigureVarukorgWrapPanel()
+        {
+            var varukorgStackPanel = new StackPanel
             {
-                Background = myBrush
+                Background = Brushes.LightBlue,
             };
-            grid.Children.Add(productStackPanel);
-            Grid.SetColumn(productStackPanel, 0);
+
+            varukorgWrapPanel = new WrapPanel
+            {
+                Orientation = Orientation.Vertical,
+                Width = 350,
+                Margin = new Thickness(10, 0, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+
+            varukorgStackPanel.Children.Add(varukorgWrapPanel);
+
+            grid.Children.Add(varukorgStackPanel);
+            Grid.SetColumn(varukorgStackPanel, 1);
+
+            CreateKassaTableTitle();
+        }
+
+        private void ConfigureProductsWrapPanel()
+        {
+            var productStackPanel = new StackPanel
+            {
+                Background = GetBackgroundImageBrush()
+            };
 
             productWrapPanel = new WrapPanel
             {
@@ -93,35 +102,31 @@ namespace Butik_Projekt
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10)
             };
+
             productStackPanel.Children.Add(productWrapPanel);
 
-
-            varukorgWrapPanel = new StackPanel
-            {
-                Orientation = Orientation.Vertical,
-                Background = Brushes.LightBlue,
-                Width = 365,
-                Margin = new Thickness(10, 0, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
-            grid.Children.Add(varukorgWrapPanel);
-            Grid.SetColumn(varukorgWrapPanel, 1);
-
-            KassaTableTitle();
-
-            GetProducts();
+            grid.Children.Add(productStackPanel);
+            Grid.SetColumn(productStackPanel, 0);
         }
 
-        public void GetProducts()
+        private void ConfigureWindowSettings()
         {
-            ReadSavedItems();
+            Title = AppSetting.Title;
+            Height = AppSetting.Height;
+            Width = AppSetting.Width;
+        }
 
-            products = File.ReadAllLines("Produkter.csv");
-            foreach (string product in products)
+        private static ImageBrush GetBackgroundImageBrush()
+        {
+            var uri = new Uri(AppSetting.BackgroundImagePath);
+            return new ImageBrush(new BitmapImage(uri));
+        }
+
+        public void ShowProducts()
+        {
+            foreach (var product in _products)
             {
-                string[] splittedPruduct = product.Split(',');
-
-                StackPanel productStackPanel = new StackPanel()
+                var productStackPanel = new StackPanel()
                 {
                     Orientation = Orientation.Vertical,
                     Margin = new Thickness(10),
@@ -132,23 +137,22 @@ namespace Butik_Projekt
                     HorizontalAlignment = HorizontalAlignment.Center
                 };
 
-                string path = ("Bilder/" + splittedPruduct[0]);
+                var path = ("Images/" + product.ImagePath);
 
-                ImageSource source = new BitmapImage(new Uri(path, UriKind.Relative));
-                Image image = new Image
+                var image = new Image
                 {
-                    Source = source,
                     Width = 100,
                     Height = 100,
                     Stretch = Stretch.Fill,
-                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(5),
                     VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(5)
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Source = new BitmapImage(new Uri(path, UriKind.Relative))
                 };
 
                 Label productName = new Label
                 {
-                    Content = splittedPruduct[1],
+                    Content = product.Name,
                     FontSize = 18,
                     FontWeight = FontWeights.Bold,
                     Padding = new Thickness(10, 0, 0, 0)
@@ -156,13 +160,13 @@ namespace Butik_Projekt
 
                 Label productDescription = new Label
                 {
-                    Content = splittedPruduct[2],
+                    Content = product.Description,
                     Padding = new Thickness(10, 0, 0, 0)
                 };
 
                 Label productPrice = new Label
                 {
-                    Content = "Price: " + splittedPruduct[3] + "/kg",
+                    Content = "Price: " + product.Price + "/kg",
                     Padding = new Thickness(10, 5, 0, 0),
                     FontWeight = FontWeights.SemiBold,
                     FontSize = 14
@@ -170,7 +174,7 @@ namespace Butik_Projekt
 
                 currentStock = new Label
                 {
-                    Content = "Available: " + splittedPruduct[4] + " kg",
+                    Content = "Available: " + product.CurrentStock + " kg",
                     Padding = new Thickness(10, 5, 0, 0)
                 };
 
@@ -184,7 +188,7 @@ namespace Butik_Projekt
 
                 Button buyProduct = new Button()
                 {
-                    Content = "Buy " + splittedPruduct[1],
+                    Content = "Buy " + product.Name,
                     Width = 100,
                     Height = 20,
                     Margin = new Thickness(5)
@@ -199,16 +203,20 @@ namespace Butik_Projekt
                     MaxLength = 3,
                 };
 
-                buyProduct.Tag = amount;
-
-                BuyedProduct buyedProduct = new BuyedProduct()
+                buyProduct.Tag = new BoughtProduct
                 {
-                    Name = splittedPruduct[1],
-                    Amount = 0,
-                    Price = int.Parse(splittedPruduct[3]),
-                    CurrentStock = int.Parse(splittedPruduct[4])
+                    ProductName= product.Name,
+                    TextBox = amount
                 };
-                buyedProducts.Add(buyedProduct);
+
+                Product buyedProduct = new Product()
+                {
+                    Name = product.Name,
+                    Price = product.Price,
+                    CurrentStock = product.CurrentStock
+                };
+
+                //_products.Add(buyedProduct);
 
                 amountAndBuy.Children.Add(amount);
                 amountAndBuy.Children.Add(buyProduct);
@@ -222,32 +230,26 @@ namespace Butik_Projekt
 
                 productWrapPanel.Children.Add(productStackPanel);
 
-                buyProduct.Click += GetProduct_Click;
+                buyProduct.Click += ShowProducts_Click;
             }
         }
 
-        private void GetProduct_Click(object sender, RoutedEventArgs e)
+        private void ShowProducts_Click(object sender, RoutedEventArgs e)
         {
-            Button button = sender as Button;
+            var button = sender as Button;
+            var boughtProduct = (BoughtProduct)button.Tag;
+            
+            var product = _products.FirstOrDefault(a => a.Name == boughtProduct.ProductName);
 
-            string name = button.Content.ToString().Remove(0, 4);
-            BuyedProduct product = buyedProducts.Where(a => a.Name == name).Select(a => a).FirstOrDefault();
-
-            TextBox amountTextBox = (TextBox)button.Tag;
-
-            if (int.TryParse(amountTextBox.Text, out int result))
+            if (int.TryParse(boughtProduct.TextBox.Text, out int amount))
             {
-                if (result <= product.CurrentStock)
+                if (amount <= product.CurrentStock)
                 {
-                    int amount = int.Parse(amountTextBox.Text);
+                    currentStock.Content = "Available: " + (product.CurrentStock - amount) + " kg";
+                    _products.FirstOrDefault(a => a.Name == boughtProduct.ProductName).CurrentStock -= amount;
 
-                    product.Amount = amount;
-
-                    currentStock.Content = "Available: " + (product.CurrentStock - product.Amount) + " kg";
-                    product.CurrentStock = product.CurrentStock - product.Amount;
-
-                    SendToBasket(name, amount, amount * product.Price);
-                    amountTextBox.Clear();
+                    SendToBasket(boughtProduct.ProductName, amount, amount * product.Price);
+                    boughtProduct.TextBox.Clear();
                 }
                 else
                 {
@@ -260,9 +262,9 @@ namespace Butik_Projekt
             }
         }
 
-        public void KassaTableTitle()
+        public void CreateKassaTableTitle()
         {
-            string path = ("Bilder/Logo.png");
+            string path = ("Images/Logo.png");
 
             ImageSource source = new BitmapImage(new Uri(path, UriKind.Relative));
             Image image = new Image
@@ -345,7 +347,7 @@ namespace Butik_Projekt
 
         public void SendToBasket(object nameContent, object amountContent, object priceContent)
         {
-            BasketItem basketItem = new BasketItem()
+            BasketProduct basketItem = new BasketProduct()
             {
                 Name = nameContent.ToString(),
                 TotalAmount = Convert.ToInt32(amountContent),
@@ -353,15 +355,15 @@ namespace Butik_Projekt
                 Checked = false
             };
 
-            if (basketItems.Exists(a => a.Name == nameContent.ToString()))
+            if (_basketProducts.Exists(a => a.Name == nameContent.ToString()))
             {
-                BasketItem existProduct = basketItems.Where(a => a.Name == nameContent.ToString()).Select(a => a).FirstOrDefault();
+                BasketProduct existProduct = _basketProducts.Where(a => a.Name == nameContent.ToString()).Select(a => a).FirstOrDefault();
                 existProduct.TotalAmount += Convert.ToInt32(amountContent);
                 existProduct.TotalPrice += Convert.ToInt32(priceContent);
             }
             else
             {
-                basketItems.Add(basketItem);
+                _basketProducts.Add(basketItem);
             }
 
             ShowBasketItems();
@@ -372,9 +374,9 @@ namespace Butik_Projekt
             int counter = 1;
 
             varukorgWrapPanel.Children.Clear();
-            KassaTableTitle();
+            CreateKassaTableTitle();
 
-            foreach (var item in basketItems)
+            foreach (var item in _basketProducts)
             {
                 StackPanel panel = new StackPanel()
                 {
@@ -436,8 +438,30 @@ namespace Butik_Projekt
 
                 counter++;
             }
-            if (basketItems.Count != 0)
+            if (_basketProducts.Count != 0)
             {
+                Line line = new Line
+                {
+                    X1 = 20,
+                    Y1 = 20,
+                    X2 = 350,
+                    Y2 = 20,
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 1,
+                };
+                varukorgWrapPanel.Children.Add(line);
+
+                Label totalPrice = new Label()
+                {
+                    Padding = new Thickness(20, 10, 0, 20),
+                    Content = "Totala belopp är: " + _basketProducts.Sum(a => a.TotalPrice) + " kr",
+                    FontSize = 15,
+                    Width = 250,
+                    FontWeight = FontWeights.SemiBold,
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
+                varukorgWrapPanel.Children.Add(totalPrice);
+
                 CreateButtons();
             }
         }
@@ -446,8 +470,8 @@ namespace Butik_Projekt
         {
             CheckBox box = (CheckBox)sender;
 
-            BasketItem item = (BasketItem)box.Tag;
-            BasketItem existProduct = basketItems.Where(a => a.Name == item.Name.ToString()).Select(a => a).FirstOrDefault();
+            BasketProduct item = (BasketProduct)box.Tag;
+            BasketProduct existProduct = _basketProducts.Where(a => a.Name == item.Name.ToString()).Select(a => a).FirstOrDefault();
 
             existProduct.Checked = true;
         }
@@ -456,8 +480,8 @@ namespace Butik_Projekt
         {
             CheckBox box = (CheckBox)sender;
 
-            BasketItem item = (BasketItem)box.Tag;
-            BasketItem existProduct = basketItems.Where(a => a.Name == item.Name.ToString()).Select(a => a).FirstOrDefault();
+            BasketProduct item = (BasketProduct)box.Tag;
+            BasketProduct existProduct = _basketProducts.Where(a => a.Name == item.Name.ToString()).Select(a => a).FirstOrDefault();
 
             existProduct.Checked = false;
         }
@@ -509,23 +533,14 @@ namespace Butik_Projekt
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            var productsToSave = _basketProducts.Select(p => $"{p.Name},{p.TotalAmount},{p.TotalPrice}");
 
-            foreach (var item in basketItems)
-            {
-                string name = item.Name;
-                string totalAmount = item.TotalAmount.ToString();
-                string totalPrice = item.TotalPrice.ToString();
-
-                savedProducts.Add(name + "," + totalAmount + "," + totalPrice);
-            }
-
-            File.WriteAllLines(savedBasket, savedProducts);
+            File.WriteAllLines(AppSetting.SavedBasketPath, productsToSave);
             MessageBox.Show("Din varukorg har sparat!");
 
             varukorgWrapPanel.Children.Clear();
-            KassaTableTitle();
+            CreateKassaTableTitle();
             ShowBasketItems();
-            savedProducts.Clear();
         }
 
         private void Pay_Click(object sender, RoutedEventArgs e)
@@ -535,21 +550,21 @@ namespace Butik_Projekt
 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
-            if (basketItems.All(a => a.Checked == false))
+            if (_basketProducts.All(a => a.Checked == false))
             {
                 MessageBox.Show("Du måste välj en produkt!");
             }
             else
             {
-                foreach (var item in basketItems.ToList())
+                foreach (var item in _basketProducts.ToList())
                 {
                     if (item.Checked == true)
                     {
-                        basketItems.Remove(item);
+                        _basketProducts.Remove(item);
                     }
                 }
 
-                File.Delete(savedBasket);
+                File.Delete(AppSetting.SavedBasketPath);
                 ShowBasketItems();
             }
         }
@@ -572,7 +587,7 @@ namespace Butik_Projekt
 
             TableTitle();
 
-            foreach (var item in basketItems)
+            foreach (var item in _basketProducts)
             {
                 StackPanel panel = new StackPanel()
                 {
@@ -623,9 +638,9 @@ namespace Butik_Projekt
                 counter++;
             }
 
-            total = basketItems.Select(a => a.TotalPrice).Sum();
+            var total = _basketProducts.Sum(a => a.TotalPrice);
 
-            totalPrice = new Label()
+            Label totalPrice = new Label()
             {
                 Content = "Din totala belopp är: " + total + " kr",
                 FontSize = 15,
@@ -640,7 +655,7 @@ namespace Butik_Projekt
                 FontSize = 15,
                 FontWeight = FontWeights.SemiBold,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(10,10,10,0)
+                Margin = new Thickness(10, 10, 10, 0)
             };
             varukorgWrapPanel.Children.Add(discount);
 
@@ -649,7 +664,7 @@ namespace Butik_Projekt
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(10,0,0,0)
+                Margin = new Thickness(10, 0, 0, 0)
             };
             varukorgWrapPanel.Children.Add(discountStack);
 
@@ -672,111 +687,162 @@ namespace Butik_Projekt
 
             discountStack.Children.Add(discountText);
             discountStack.Children.Add(discountButton);
-            varukorgWrapPanel.Children.Add(totalPrice);
-
             discountButton.Click += DiscountButton_Click;
 
-            finish = new Button()
+            CreateFinishPanel();
+        }
+
+        private void CreateFinishPanel()
+        {
+            finishPanel.Orientation = Orientation.Horizontal;
+            finishPanel.HorizontalAlignment = HorizontalAlignment.Center;
+
+            var finish = new Button()
             {
                 Content = "Slutför",
                 Width = 75,
                 Height = 30,
-                Margin = new Thickness(15),
+                Margin = new Thickness(15, 15, 5, 15),
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-            varukorgWrapPanel.Children.Add(finish);
+            finishPanel.Children.Add(finish);
             finish.Click += Finish_Click;
+
+            var back = new Button()
+            {
+                Content = "Tillbaka",
+                Width = 75,
+                Height = 30,
+                Margin = new Thickness(5, 15, 15, 15),
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            finishPanel.Children.Add(back);
+            back.Click += Back_Click;
+
+            varukorgWrapPanel.Children.Add(finishPanel);
+        }
+
+        private void Back_Click(object sender, RoutedEventArgs e)
+        {
+            ShowBasketItems();
         }
 
         private void DiscountButton_Click(object sender, RoutedEventArgs e)
         {
-            CalculateDiscount(discountText.Text, totalPrice);
+            CalculateDiscount(discountText.Text);
         }
 
-        public void CalculateDiscount(string input, Label totalprice)
+        public void CalculateDiscount(string input)
         {
-            bool Valid = false;
+            //string discounted = null;
+            //bool Valid = ValidateInput(input); 
 
-            foreach (var code in discountCopounes)
+            //discountText.Clear();
+
+            //double total = _basketProducts.Sum(a => a.TotalPrice);
+            //if (Valid == true && total > 0)
+            //{
+            //    totalprice.Content = Math.Round(total - (total * int.Parse(discounted) / 100), 2);
+            //    totalprice.Content = "Din totala belopp är: " + totalprice.Content + " kr";
+            //    total -= (total * int.Parse(discounted) / 100);
+
+            //    varukorgWrapPanel.Children.Remove(finishPanel);
+            //    finishPanel.Children.Clear();
+            //    CreateFinishPanel();
+            //    Valid = false;
+
+            //    MessageBox.Show("Din rabat kod är accepterat!");
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Ogiligt rabatt kod!");
+            //}
+        }
+
+        private bool ValidateInput(string input)
+        {
+            var coupon = _coupons.FirstOrDefault(c => input == c.Code);
+
+            if (coupon != null)
             {
-                if (input == code.Code)
-                {
-                    Valid = true;
-                    discountCopounes.Remove(code);
-                    break;
-                }
+                _coupons.Remove(coupon);
+                return true;
             }
 
-            discountText.Clear();
-
-            if (Valid == true && total > 0)
-            {
-                totalprice.Content = Math.Round(total - (total * int.Parse(discounted[1]) / 100),2);
-                totalprice.Content = "Din totala belopp är: " + totalprice.Content + " kr";
-                total = total - (total * int.Parse(discounted[1]) / 100);
-
-                varukorgWrapPanel.Children.Remove(totalPrice);
-                varukorgWrapPanel.Children.Add(totalPrice);
-                varukorgWrapPanel.Children.Remove(finish);
-                varukorgWrapPanel.Children.Add(finish);
-                Valid = false;
-
-                MessageBox.Show("Din rabat kod är accepterat!");
-            }
-            else
-            {
-                MessageBox.Show("Ogiligt rabatt kod!");
-            }
+            return false;
         }
 
         private void Finish_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Grattis, dit köp har klart!");
             varukorgWrapPanel.Children.Clear();
-            basketItems.Clear();
-            File.Delete(savedBasket);
-            KassaTableTitle();
+            _basketProducts.Clear();
+            File.Delete(AppSetting.SavedBasketPath);
+            CreateKassaTableTitle();
         }
 
-        public void ReadSavedItems()
+        private List<BasketProduct> ReadSavedProducts()
         {
-            if (File.Exists(savedBasket))
-            {
-                readItemsFromBasket = File.ReadAllLines(savedBasket);
+            var basketProducts = new List<BasketProduct>();
 
-                if (readItemsFromBasket.Length > 0)
+            if (File.Exists(AppSetting.SavedBasketPath))
+            {
+                basketProducts.AddRange(File.ReadAllLines(AppSetting.SavedBasketPath)
+                .Select(p =>
                 {
-                    foreach (var item in readItemsFromBasket)
+                    var productFields = p.Split(',');
+                    return new BasketProduct
                     {
-                        string[] temp = item.Split(',');
-
-                        BasketItem basketItem = new BasketItem();
-
-                        basketItem.Name = temp[0];
-                        basketItem.TotalAmount = int.Parse(temp[1]);
-                        basketItem.TotalPrice = int.Parse(temp[2]);
-                        basketItem.Checked = false;
-                        basketItems.Add(basketItem);
-                    }
-                    ShowBasketItems();
-                }
+                        Name = productFields[0],
+                        TotalAmount = int.Parse(productFields[1]),
+                        TotalPrice = int.Parse(productFields[2]),
+                        Checked = false
+                    };
+                }));
             }
+
+            return basketProducts;
         }
 
-        public void ReadDiscountCopounes()
+        private List<Product> ReadProducts()
         {
-            string[] discount = File.ReadAllLines("Discount.csv");
+            var products = new List<Product>();
 
-            foreach (var item in discount)
+            products.AddRange(File.ReadAllLines(AppSetting.ProductsFilePath)
+            .Select(p =>
             {
-                discounted = item.Split(',');
-                DiscountCopounes copoune = new DiscountCopounes()
+                var productFields = p.Split(',');
+                return new Product()
+                {
+                    ImagePath = productFields[0],
+                    Name = productFields[1],
+                    Description = productFields[2],
+                    Price = int.Parse(productFields[3]),
+                    CurrentStock = int.Parse(productFields[4])
+                };
+            }));
+
+            return products;
+        }
+
+        private List<Coupon> ReadDiscountCopounes()
+        {
+            var coupons = new List<Coupon>();
+
+            coupons.AddRange(File.ReadAllLines(AppSetting.DiscountFilePath)
+            .Select(c =>
+            {
+                var discounted = c.Split(',');
+                return new Coupon()
                 {
                     Code = discounted[0],
                     Percentage = double.Parse(discounted[1])
                 };
-                discountCopounes.Add(copoune);
-            }
+            }));
+
+            return coupons;
         }
+
+
     }
 }
